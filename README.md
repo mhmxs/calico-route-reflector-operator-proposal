@@ -33,6 +33,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  * Remove route reflector from `cordon`ed nodes
  * Prefer nodes during selection based on label
  * Disable node selection as route reflector based on label
+ * Make sure node toleraits (taint) route reflector pod
  * Calculate ratio with different options
  
  ### Route Reflector topologies
