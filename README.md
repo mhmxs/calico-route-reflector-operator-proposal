@@ -89,40 +89,26 @@ Calico has an existing set of controllers/operators, including one that monitors
  For a simple single cluster, adding more RRs doesn't buy much because all clients must be peered to a quorum of the RRs.  For a simple cluster topology, it'd make sense to have say `num RRs = min(num nodes, 5-9)`.  
  
  For the other topologies, each RR can handle 200 clients comfortably, so there could be 200 clients served by a 3-RR cluster with a full mesh between the RR clusters or 200 clients in a "rack" with up to 200(!) "racks" served by a single spine pair.
- 
-  * Exponential: `x=a(b^y)+c`
-    * if `a` equals `120`, `b` `1.0003` and `c` `-117`:
 
-|total number of nodes (y)|~number of RR nodes (x)|
+  * Linear: ratio is configured by Custom Resource like
+    * if ratio is 0.005:
+    
+|total number of nodes|~number of RR nodes|
 |-|-|
-|0|3|
-|100|7|
-|200|10|
-|500|22|
-|5000|420|
-
-Calculate your own: https://www.desmos.com/calculator/o3nnc3aho8
+|1|3|
+|200|3|
+|1000|5|
+...
+|5000|25|
 
   * Stepping: ranges are configured by Custom Resource like
  
 |range of node number|number of RR nodes|
 |-|-|
-|0-50|3|
-|51-100|9|
-|101-500|20|
-|501-5000|42|
-
-  * Linear: ratio is configured by Custom Resource like
-    * if ratio is 0.111:
-    
-|total number of nodes|~number of RR nodes|
-|-|-|
-|0|3|
-|50|6|
-|100|11|
-|200|22|
-|500|55|
-|5000|555|
+|1-200|3|
+|201-1000|5|
+...
+|501-5000|25|
 
 ## Future reading:
 
