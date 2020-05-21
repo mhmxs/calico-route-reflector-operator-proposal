@@ -49,20 +49,7 @@ Calico has an existing set of controllers/operators, including one that monitors
   Client1   Client2   Client3
  ```
  The RRs also peer with each other since, in a Calico network, they also have local client routes to advertise.  However, a route learned from Client 1 by RR1 will not be passed to RR2/3.
- 
- #### Peered clusters
- 
- For higher scale clusters of route reflectors (with different cluster IDs) can be peered by creating a full mesh of peerings between the RRs.
- 
-  ```
-    ____=============____
-   /  /  /         \   \  \
-  R1-R2-R3          R4-R5-R6
-  | ... |           | ... |
-  | ... |           | ... |
-  C1 C2 C3          C4 C5 C6
- ```
- 
+  
  #### Hierarchy
  
  The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs pair and so on.
