@@ -19,6 +19,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  * minimum number of route reflectors, less than 3 might be a bad practice
  * maximum number of route reflectors, to avoid loose cannons on the ship
  * label of the route reflector node, by default `calico-route-reflector=`
+ * route reflector cluster ID, by default `224.0.0.1`
  * regular and route reflector node ratio calculation method
  * label of the zone, optional for single zone clusters
  * label of the preferred nodes, optional to help node selector find the best targets
