@@ -39,11 +39,23 @@ Calico has an existing set of controllers/operators, including one that monitors
  
  ### Route Reflector topologies
  
- #### Single cluster
+ #### Simple cluster
+ 
+  The simplest route reflector topology contains only one cluster ID. There are only one group of route reflectors and one group for clients. This topology doesn't scale well and useful only for single zone or single region clusters because clients are having session to all of the route reflectors.
+ ```
+        _________________
+      /                  \
+     RR1-------RR2-------RR3
+     |/ \ / \ /  \ / \ / \|
+     |\ / \ / \  / \ / \ /|
+  Client1    Client2    Client3
+ ```
+ 
+ #### Quorum cluster
  
  Route Reflectors can be divided into clusters based on cluster ID.  Within a cluster, RRs do not share routes with each other that they learned from their clients.  This means that each client must be connected to a quorum of RR nodes within the cluster in order to share at least one RR node with every other client.  For example, with a cluster of three RRs, each client must peer with at least 2:
  ```
-       _______________
+        _______________
       /                \
     RR1-------RR2-------RR3
      |   \ /        \ /  |
@@ -51,7 +63,9 @@ Calico has an existing set of controllers/operators, including one that monitors
   Client1   Client2   Client3
  ```
  The RRs also peer with each other since, in a Calico network, they also have local client routes to advertise.  However, a route learned from Client 1 by RR1 will not be passed to RR2/3.
-  
+ 
+ This topology scales well but does not suggersted for giant clusters. Near 4000-4500 (depends on the flavor of nodes) nodes there should be a "which finger to bite" situation, because increasing the number of route reflectors can decrease the number of BGP connections but increases the size of the BGP update messages in the same time and that became the botleneck of the system.
+ 
  #### Hierarchy
  
  The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs pair and so on.
@@ -65,6 +79,20 @@ Calico has an existing set of controllers/operators, including one that monitors
  C1 C2 Cn  C3 C4 Cm
  ```
  Every client peers with both of the RRs in its rack.  The left/right hand "leaf" RR in each rack peers with the left/right hand RR in the "spine".  No need to peer the leaves with both spines because each spine carries the same routes.
+ 
+ The following BGP sessions needs to be configured:
+ 
+ * Route reflector -> Client
+   * [R1,R2] -> [C1,Cn]
+   * [R3,R4] -> [C3,Cm]
+   * [R5,R6] -> [R1,R2]
+   * [R5,R6] -> [R3,R4]
+  
+ * Route reflector <-> Route reflector
+   * R1 <-> R2
+   * R3 <-> R4
+   * R5 <-> R6
+ 
  
  #### Need for cluster ID
  
