@@ -68,32 +68,39 @@ Calico has an existing set of controllers/operators, including one that monitors
  
  #### Hierarchy
  
- The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs pair and so on.
+ The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs are essentially clients.
 
 ```
-       ____
-      /    \
-     R5----R6 
-    /   \ /   \
-  /     / \     \
- R1----R2  R3----R4
+    S1--------S2 
+    X          X
+ R1   R2    R3   R4
  | X X |    | X X |
  C1 C2 Cn  C3 C4 Cm
  ```
- Every client peers with both of the RRs in its rack.  The left/right hand "leaf" RR in each rack peers with the left/right hand RR in the "spine".  No need to peer the leaves with both spines because each spine carries the same routes.
+
+| calico-node | RouteReflectorClusterID |
+|-------------|-------------------------|
+| S1,S2       | 0.0.0.1                 |
+| R1,R2       | 0.0.0.2                 |
+| R3,R4       | 0.0.0.3                 |
+
+ Every client peers with both of the RRs in its "rack". The rack RRs then peer with:
+
+ **(a)** At least a quorum of the spine RR if the rack RR are running other workloads as well. (i.e. non-dedicated)<br>
+ **(b)** With a minimum of 1 spine RR if the rack RR is dedicated to RR function. 
+
+There's no need for a direct session between R1<>R2 and R3<>R4 as they'll receive each other's routes via a spine RR, with the spine's RouteReflectorClusterID in the CLUSTER_LIST BGP attribute. A BGP UPDATE from C1 on C3 will have all three ClusterIDs in the CLUSTER_LIST for routing information loop prevention. Because of how Calico configures BIRD, a drawback of this solution is that UPDATES from a spine are reflected back to the other spine(s), which in turn will drop such UPDATES as it has its own Cluster ID in the CLUSTER_LIST.
  
  The following BGP sessions needs to be configured:
  
  * Route reflector -> Client
+   * [S1,S2] -> [R1,R2]
+   * [S1,S2] -> [R3,R4]
    * [R1,R2] -> [C1,Cn]
    * [R3,R4] -> [C3,Cm]
-   * [R5,R6] -> [R1,R2]
-   * [R5,R6] -> [R3,R4]
   
- * Route reflector <-> Route reflector
-   * R1 <-> R2
-   * R3 <-> R4
-   * R5 <-> R6
+ * Route reflector <-> Route reflector (i.e. a regular iBGP session)
+   * S1 <-> S2
  
  
  #### Need for cluster ID
