@@ -64,7 +64,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  ```
  The RRs also peer with each other since, in a Calico network, they also have local client routes to advertise.  However, a route learned from Client 1 by RR1 will not be passed to RR2/3.
  
- This topology scales well but does not suggersted for giant clusters. Near 4000-4500 (depends on the flavor of nodes) nodes there should be a "which finger to bite" situation, because increasing the number of route reflectors can decrease the number of BGP connections but increases the size of the BGP update messages in the same time and that became the botleneck of the system.
+ This topology scales well but does not suggersted for giant clusters. Near 4000-4500 (depends on the flavor of nodes) nodes there should be a "which finger to bite" situation, because increasing the number of route reflectors can decrease the number of BGP connections but increases the size of the BGP update messages in the same time and that became the bottleneck of the system.
  
  #### Hierarchy
  
