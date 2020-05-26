@@ -43,7 +43,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  
   The simplest route reflector topology contains only one cluster ID. There are only one group of route reflectors and one group for clients. This topology doesn't scale well and useful only for single zone or single region clusters because clients are having session to all of the route reflectors.
  ```
-        _________________
+       _________________
       /                  \
      RR1-------RR2-------RR3
      |/ \ / \ /  \ / \ / \|
@@ -55,7 +55,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  
  Route Reflectors can be divided into clusters based on cluster ID.  Within a cluster, RRs do not share routes with each other that they learned from their clients.  This means that each client must be connected to a quorum of RR nodes within the cluster in order to share at least one RR node with every other client.  For example, with a cluster of three RRs, each client must peer with at least 2:
  ```
-        _______________
+       _______________
       /                \
     RR1-------RR2-------RR3
      |   \ /        \ /  |
@@ -71,6 +71,8 @@ Calico has an existing set of controllers/operators, including one that monitors
  The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs pair and so on.
 
 ```
+       ____
+      /    \
      R5----R6 
     /   \ /   \
   /     / \     \
@@ -105,7 +107,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  * RR3 advertises RR2's copy  of the route back to RR1
  
  ```
-        _______________
+       _______________
       /                \
     RR1-------RR2-------RR3
      |   \ /        \ /  |
