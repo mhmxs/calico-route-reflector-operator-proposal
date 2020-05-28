@@ -39,9 +39,9 @@ Calico has an existing set of controllers/operators, including one that monitors
  
  ### Route Reflector topologies
  
- #### Simple cluster
+ #### Single cluster [50-800 nodes]
  
-  The simplest route reflector topology contains only one cluster ID. There are only one group of route reflectors and one group for clients. This topology doesn't scale well and useful only for single zone or single region clusters because clients are having session to all of the route reflectors.
+  The simplest route reflector topology contains only one cluster ID. There are only one group of route reflectors and one group for clients. This topology doesn't scale well and useful only for single zone or single region clusters because clients are having session to all of the route reflectors otherwise network latency could be a bottleneck.
  ```
        _________________
       /                  \
@@ -51,7 +51,20 @@ Calico has an existing set of controllers/operators, including one that monitors
   Client1    Client2    Client3
  ```
  
- #### Quorum cluster
+  #### Multi cluster [500-2000 nodes]
+ 
+ Each Route Reflector has it's own cluster ID. Clients are connecting to 3 different clusters and route reflectors are constituting one mesh.
+ ```
+       _______________
+      /         |      \
+    RR1        RR2      RR3
+     |   \ /        \ /  |
+     |   / \        / \  |
+  Client1   Client2   Client3
+ ```
+ Route reflector during it advertises a route it got from a client, it adds its cluster ID to it. When an RR advertises a route it got from another RR, it appends its cluster ID to the list. When an RR receives multiple copies of the same route (i.e the same dest CIDR and same next hop), it will only advertise one copy of the route. It will always choose a copy of the route with fewest cluster IDs associated with it and also doesn't advertise routes which already has it's cluster ID in the list.
+ 
+ #### Quorum cluster [1000-3000 nodes]
  
  Route Reflectors can be divided into clusters based on cluster ID.  Within a cluster, RRs do not share routes with each other that they learned from their clients.  This means that each client must be connected to a quorum of RR nodes within the cluster in order to share at least one RR node with every other client.  For example, with a cluster of three RRs, each client must peer with at least 2:
  ```
@@ -66,14 +79,14 @@ Calico has an existing set of controllers/operators, including one that monitors
  
  This topology scales well but does not suggersted for giant clusters. Near 4000-4500 (depends on the flavor of nodes) nodes the BGP connection number became bottleneck and there should be a "which finger to bite" situation, because increasing the number of route reflectors can decrease the number of BGP connections but increases the size of the BGP update messages in the same time and that became the new bottleneck of the system.
  
- #### Hierarchy
+ #### Hierarchy [2000-5000 nodes]
  
  The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs are essentially clients.
 
 ```
     S1--------S2 
     X          X
- R1   R2    R3   R4
+ R1---R2    R3---R4
  | X X |    | X X |
  C1 C2 Cn  C3 C4 Cm
  ```
