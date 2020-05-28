@@ -39,9 +39,9 @@ Calico has an existing set of controllers/operators, including one that monitors
  
  ### Route Reflector topologies
  
- #### Single cluster [50-800 nodes]
+ #### Single cluster [50-500 nodes]
  
-  The simplest route reflector topology contains only one cluster ID. There are only one group of route reflectors and one group for clients. This topology doesn't scale well and useful only for single zone or single region clusters because clients are having session to all of the route reflectors otherwise network latency could be a bottleneck.
+  The simplest route reflector topology contains only one cluster ID. There are only one group of route reflectors and one group for clients. This topology doesn't scale well and useful only for single zone or single region clusters. The number of client connections per route reflector could be a bottleneck very easy.
  ```
        _________________
       /                  \
@@ -50,6 +50,15 @@ Calico has an existing set of controllers/operators, including one that monitors
      |\ / \ / \  / \ / \ /|
   Client1    Client2    Client3
  ```
+ 
+| | |
+|-|-|
+| # of nodes | 500 |
+| # of RRs | 3 |
+| Redundancy | 3 |
+| # of clients / RR | 497 |
+| # of RRs / RR | 2 |
+| Connections / RR | 499 |
  
   #### Multi cluster [500-2000 nodes]
  
@@ -62,9 +71,18 @@ Calico has an existing set of controllers/operators, including one that monitors
      |   / \        / \  |
   Client1   Client2   Client3
  ```
- Route reflector during it advertises a route it got from a client, it adds its cluster ID to it. When an RR advertises a route it got from another RR, it appends its cluster ID to the list. When an RR receives multiple copies of the same route (i.e the same dest CIDR and same next hop), it will only advertise one copy of the route. It will always choose a copy of the route with fewest cluster IDs associated with it and also doesn't advertise routes which already has it's cluster ID in the list.
- 
- #### Quorum cluster [1000-3000 nodes]
+ Route reflector during it advertises a route it got from a client, it adds its cluster ID to it. When an RR advertises a route it got from another RR, it appends its cluster ID to the list. When an RR receives multiple copies of the same route (i.e the same dest CIDR and same next hop), it will only advertise one copy of the route. It will always choose a copy of the route with fewest cluster IDs associated with it and also doesn't advertise routes which already has it's cluster ID in the list. BGP update message size and number could be a bottleneck because all route reflectors advertise the full table to all other route reflectors.
+
+| | |
+|-|-|
+| # of nodes | 2000 |
+| # of RRs | 11 |
+| Redundancy | 3 |
+| # of clients / RR | 542 |
+| # of RRs / RR | 10 |
+| Connections / RR | ~552 |
+
+ #### Quorum cluster [1000-2000 nodes]
  
  Route Reflectors can be divided into clusters based on cluster ID.  Within a cluster, RRs do not share routes with each other that they learned from their clients.  This means that each client must be connected to a quorum of RR nodes within the cluster in order to share at least one RR node with every other client.  For example, with a cluster of three RRs, each client must peer with at least 2:
  ```
@@ -77,25 +95,49 @@ Calico has an existing set of controllers/operators, including one that monitors
  ```
  The RRs also peer with each other since, in a Calico network, they also have local client routes to advertise.  However, a route learned from Client 1 by RR1 will not be passed to RR2/3.
  
- This topology scales well but does not suggersted for giant clusters. Near 4000-4500 (depends on the flavor of nodes) nodes the BGP connection number became bottleneck and there should be a "which finger to bite" situation, because increasing the number of route reflectors can decrease the number of BGP connections but increases the size of the BGP update messages in the same time and that became the new bottleneck of the system.
+ This topology scales well but does not suggersted for giant clusters. Near 3000 (depends on the flavor of nodes) nodes the BGP connection number became bottleneck and there should be a "which finger to bite" situation, because increasing the number of route reflectors can decrease the number of BGP connections but increases the size of the BGP update messages in the same time and that became the new bottleneck of the system.
  
+| | |
+|-|-|
+| # of nodes | 2000 |
+| # of RRs | 13 |
+| Redundancy | 3 |
+| # of Quorums | 286 |
+| # of clients per quorum | 7 |
+| # of quorum / RR | 63 |
+| # of clients / RR | 456 |
+| # of RRs / RR | 12 |
+| Connections / RR | ~468 |
+
  #### Hierarchy [2000-5000 nodes]
  
  The most scalable option is to mimic the structure of a datacenter network, dividing the cluster into "racks" and having a pair of RRs per "rack", then having a second level of RR to which the "rack" RRs are essentially clients.
 
 ```
-    S1--------S2 
+      ________
+     /        \
+    S1---S2---S3 
     X          X
- R1---R2    R3---R4
+ R1 R2 R3   R4 R5 R6
  | X X |    | X X |
  C1 C2 Cn  C3 C4 Cm
  ```
 
+| | |
+|-|-|
+| # of nodes | 5000 |
+| # of racks | 10 |
+| # of RRs | 33 |
+| Redundancy | 3 |
+| # of clients / RR | 447 |
+| # of RRs / RR | 3 |
+| Connections / RR | ~500 |
+
 | calico-node | RouteReflectorClusterID |
 |-------------|-------------------------|
-| S1,S2       | 0.0.0.1                 |
-| R1,R2       | 0.0.0.2                 |
-| R3,R4       | 0.0.0.3                 |
+| S1,S2,S3       | 0.0.0.1                 |
+| R1,R2,R3       | 0.0.0.2                 |
+| R4,R5,R6       | 0.0.0.3                 |
 
  Every client peers with both of the RRs in its "rack". The rack RRs then peer with:
 
@@ -140,7 +182,7 @@ There's no need for a direct session between R1<>R2 and R3<>R4 as they'll receiv
  
  For a simple single cluster, adding more RRs doesn't buy much because all clients must be peered to a quorum of the RRs.  For a simple cluster topology, it'd make sense to have say `num RRs = min(num nodes, 5-9)`.  
  
- For the other topologies, each RR can handle 200 clients comfortably, so there could be 200 clients served by a 3-RR cluster with a full mesh between the RR clusters or 200 clients in a "rack" with up to 200(!) "racks" served by a single spine pair.
+ For the other topologies, each RR can handle 500 clients comfortably, so there could be 500 clients served by a 3-RR cluster with a full mesh between the RR clusters or 500 clients in a "rack" with up to 500(!) "racks" served by a single spine pair.
 
   * Linear: ratio is configured by Custom Resource like
     * if ratio is 0.005:
