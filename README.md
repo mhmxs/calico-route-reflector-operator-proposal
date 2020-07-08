@@ -24,18 +24,30 @@ Calico has an existing set of controllers/operators, including one that monitors
  * label of the zone, optional for single zone clusters
  * label of the preferred nodes, optional to help node selector find the best targets
  * label of forbidden nodes, optional to disable route reflector on special nodes in the cluster
+ * wait timeout, optional to wait some time before removing old route reflectors to avoid loosing all route reflectors of a node
 
 ### Features in bullets:
  * Use a dedicated Custom Resource to configure route reflector auto scaler. (Shaun: kube-controllers already has a CRD for its configuration, the new configuration could be a sub-struct of that.)
- * Calculate route reflector nodes based on the `healthy` node number in the cluster.
+ * Calculate route reflector nodes based on the `healthy` node number in the cluster
  * Sharding route reflector nodes across zones
-   * Ballanced: same amount of route reflectors will selected per zone
-   * Per zone calculation: based on the nodes per zone
+   * In single cluster topology zones are handled individually 
+   * In all other topologies controller must select route reflectors in an equally balanced mode
+ * Distribute selected route reflectors for of a node across multi zones
+  * In single cluster topology all client connects to all route reflectors in the same zone
+  * In all other topologies controller selects at least two different zones, prefered from the same zone at the node located
  * Remove route reflector from `cordon`ed nodes
  * Prefer nodes during selection based on label
  * Disable node selection as route reflector based on label
  * Make sure node toleraits (taint) route reflector pod
  * Calculate ratio with different options
+ * Support multiple datastores
+ 
+ #### Robustness
+ * Avoid rebalancing route reflectors to often
+  * Controller sotrs nodes by creation time and hopes old ones has more chance to survive
+ * Protect node to loose all route reflectors
+  * Controller should wait some time before removing obsolete route reflectors
+  * In long term should be more robust to check BGP sessions instead of waitig fixed time foolishly
  
  ### Route Reflector topologies
  
