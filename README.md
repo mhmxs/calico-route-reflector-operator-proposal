@@ -43,7 +43,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  * Support multiple datastores
  
  #### Robustness
- * Avoid rebalancing route reflectors to often
+ * Avoid rebalancing route reflectors too often
   * Controller sotrs nodes by creation time and hopes old ones has more chance to survive
  * Protect node to loose all route reflectors
   * Controller should wait some time before removing obsolete route reflectors
