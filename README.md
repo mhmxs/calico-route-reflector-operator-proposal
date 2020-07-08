@@ -45,6 +45,9 @@ Calico has an existing set of controllers/operators, including one that monitors
  #### Robustness
  * Avoid rebalancing route reflectors too often
   * Controller sorts nodes by creation time and hopes old ones have more chance to survive
+  * Controller reuse old route reflector selections so during
+   * upscale it selects only new ones and balance the zones
+   * downscale it simply removes the route reflectors in a round robin fassion
  * Protect node to loose all route reflectors
   * Controller should wait some time before removing obsolete route reflectors
   * In long term should be more robust to check BGP sessions instead of waitig fixed time foolishly
