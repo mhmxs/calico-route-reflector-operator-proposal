@@ -31,7 +31,8 @@ Calico has an existing set of controllers/operators, including one that monitors
  * Calculate route reflector nodes based on the `healthy` node number in the cluster
  * Sharding route reflector nodes across zones
    * In single cluster topology zones are handled individually 
-   * In all other topologies controller must select route reflectors in an equally balanced mode
+   * In all other topologies controller must select route reflectors in an equally balanced mode per zone.
+   If zone has less nodes than the expected number of route reflectors the controller tries to place missing route reflectors in the next zone.
  * Distribute selected route reflectors for of a node across multi zones
   * In single cluster topology all client connects to all route reflectors in the same zone
   * In all other topologies controller selects at least two different zones, prefered from the same zone at the node located
@@ -45,9 +46,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  #### Robustness
  * Avoid rebalancing route reflectors too often
   * Controller sorts nodes by creation time and hopes old ones have more chance to survive
-  * Controller reuse old route reflector selections so during
-    * upscale it selects only new ones and balance the zones
-    * downscale it simply removes the route reflectors in a round robin fassion
+  * Controller reuse old route reflector selections as much as possible
  * Protect node to loose all route reflectors
   * Controller should wait some time before removing obsolete route reflectors
   * In long term should be more robust to check BGP sessions instead of waitig fixed time foolishly
