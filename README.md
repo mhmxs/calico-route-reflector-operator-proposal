@@ -50,6 +50,8 @@ Calico has an existing set of controllers/operators, including one that monitors
  * Protect node to loose all route reflectors
   * Controller should wait some time before removing obsolete route reflectors
   * In long term should be more robust to check BGP sessions instead of waitig fixed time foolishly
+ * Avoid loosing a zone have effect on working zones
+  * Select one route reflector from the same zone, one from any other zone and the third one from any zone. In this way each client has route reflectors from different zones.
  
  ### Route Reflector topologies
  
