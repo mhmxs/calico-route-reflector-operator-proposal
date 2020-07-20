@@ -78,7 +78,7 @@ Calico has an existing set of controllers/operators, including one that monitors
  
   #### Multi cluster [500-2000 nodes]
  
- Each Route Reflector has it's own cluster ID. Clients are connecting to 3 different clusters and route reflectors are constituting one mesh.
+ Each Route Reflector has its own cluster ID. Clients are connecting to 3 different clusters and route reflectors are constituting one mesh.
  ```
        _______________
       /         |      \
@@ -103,8 +103,8 @@ Calico has an existing set of controllers/operators, including one that monitors
  Route Reflectors can be divided into clusters based on cluster ID.  Within a cluster, RRs do not share routes with each other that they learned from their clients.  This means that each client must be connected to a quorum of RR nodes within the cluster in order to share at least one RR node with every other client.  For example, with a cluster of three RRs, each client must peer with at least 2:
  ```
        _______________
-      /                \
-    RR1-------RR2-------RR3
+      /           ______\
+    RR1_______ RR2      RR3
      |   \ /        \ /  |
      |   / \        / \  |
   Client1   Client2   Client3
