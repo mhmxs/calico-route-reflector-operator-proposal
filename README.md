@@ -231,4 +231,4 @@ There's no need for a direct session between R1<>R2 and R3<>R4 as they'll receiv
       
 ## Contribution
 
-We appreciate your help! Please feel free to share your ideas and feature requests about the topic, by leaving some comments, creating and issue or simply send me a PR. 
+We appreciate your help! Please feel free to share your ideas and feature requests about the topic, by leaving some comments, creating an issue or simply send me a PR. 
